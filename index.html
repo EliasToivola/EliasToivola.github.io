@@ -1,7 +1,105 @@
 <!DOCTYPE html>
 <html>
+<head>
+	<meta charset="utf-8">
+    <title>OpenGL Shader Example</title>
+</head>
 <body>
-<h1>Hello World</h1>
-<p>I'm hosted with GitHub Pages.</p>
+    <canvas id="myCanvas" width="400" height="300"
+            OES_vertex_array_object
+            OES_shader_precision>
+    </canvas>
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+        attribute vec4 a_position;
+        void main() {
+            gl_Position = a_position;
+        }
+    </script>
+
+    <script id="fragmentShader" type="x-shader/x-fragment">
+        precision mediump float;
+        void main() {
+            gl_FragColor = vec4(1, 0, 0, 1);
+        }
+    </script>
+
+    <script>
+        var canvas = document.getElementById("myCanvas");
+        var gl = canvas.getContext("webgl");
+		
+		var extensions = gl.getSupportedExtensions();
+		if (extensions.indexOf("OES_vertex_array_object") < 0) {
+			console.error("OES_vertex_array_object is not supported");
+		}
+
+        // Compile the vertex shader
+        var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertexShader, document.getElementById("vertexShader").text);
+        gl.compileShader(vertexShader);
+
+        // Check if compilation succeeded
+        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+            console.error("Failed to compile vertex shader");
+            console.error(gl.getShaderInfoLog(vertexShader));
+            return;
+        }
+
+        // Compile the fragment shader
+        var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragmentShader, document.getElementById("fragmentShader").text);
+        gl.compileShader(fragmentShader);
+
+        // Check if compilation succeeded
+        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+            console.error("Failed to compile fragment shader");
+            console.error(gl.getShaderInfoLog(fragmentShader));
+            return;
+        }
+
+        // Link the shaders into a program
+        var program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+
+        // Check if linking succeeded
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            console.error("Failed to link program");
+            console.error(gl.getProgramInfoLog(program));
+            return;
+        }
+
+        // Use the program
+        gl.useProgram(program);
+
+        // Set up the vertex data
+        var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+
+        var positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+        var positions = [
+             0.0,  0.5,
+            -0.5, -0.5,
+             0.5, -0.5
+        ];
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+        gl.enableVertexAttribArray(positionAttributeLocation);
+
+        var size = 2;          // 2 components per iteration
+        var type = gl.FLOAT;   // the data is 32bit floats
+        var normalize = false; // don't normalize the data
+        var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+        var offset = 0;        // start at the beginning of the buffer
+        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
+        // Draw the scene
+        var primitiveType = gl.TRIANGLES;
+        var offset = 0;
+        var count = 3;
+        gl.drawArrays(primitiveType, offset, count);
+    </script>
 </body>
 </html>
